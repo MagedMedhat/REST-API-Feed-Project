@@ -1,5 +1,5 @@
 const express = require("express");
-require('dotenv').config();
+require("dotenv").config();
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const multer = require("multer");
@@ -33,9 +33,8 @@ const fileFilter = (req, file, cb) => {
 };
 
 app.use(bodyParser.json());
-app
-  .use(multer({ storage: fileStorage, fileFilter: fileFilter })
-  .single("image")
+app.use(
+  multer({ storage: fileStorage, fileFilter: fileFilter }).single("image"),
 );
 app.use("/images", express.static(path.join(__dirname, "images")));
 
@@ -53,19 +52,24 @@ app.use((error, req, res, next) => {
   console.log(error);
   const status = error.statusCode;
   const message = error.message;
-  const data=error.data;
-  res.status(status).json({ message: message,data:data });
+  const data = error.data;
+  res.status(status).json({ message: message, data: data });
 });
 
-const PORT=process.env.PORT||8080;
+const PORT = process.env.PORT || 8080;
 
 mongoose
-  .connect(
-    process.env.MONGODB_URI
-  )
+  .connect(process.env.MONGODB_URI)
   .then((result) => {
-    app.listen(PORT, () => {
-      console.log(`listeing to http://localhost:`+PORT);
+    const server = app.listen(PORT, () => {
+      console.log(`listeing to http://localhost:` + PORT);
+    });
+
+    const socket = require("./socket");
+    const io=socket.init(server);
+
+    io.on("connection", (socket) => {
+      console.log("Client connected");
     });
   })
   .catch((err) => console.log(err));
